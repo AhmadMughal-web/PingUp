@@ -60,7 +60,14 @@ const StoriesBar = () => {
             </div>
 
             {showModel && <StoriesModel setShowModel={setShowModel} fetchStories={fetchStories} />}
-            {viewStory && <StoryViewer viewStory={viewStory} setViewStory={setViewStory} />}
+            {viewStory && (
+                <StoryViewer
+                    viewStory={viewStory}
+                    setViewStory={setViewStory}
+                    allStories={stories}
+                    currentIndex={stories.findIndex(s => s._id === viewStory._id)}
+                />
+            )}
         </div>
     )
 }

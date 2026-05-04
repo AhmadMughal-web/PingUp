@@ -2,6 +2,7 @@ import Message from '../models/Message.model.js'
 import User from '../models/User.model.js'
 import { getSocketId, io } from '../server.js'
 import { deleteFromCloudinary } from '../config/cloudinary.js'
+import { createNotification } from './notification.controller.js'
 
 // GET /api/messages  — inbox (last message per conversation)
 export const getInbox = async (req, res) => {
@@ -38,30 +39,41 @@ export const getInbox = async (req, res) => {
 export const getRecentMessages = async (req, res) => {
   try {
     const myId = req.user._id
+
+    // Sirf wo messages jo doosron ne mujhe bheje hain
     const messages = await Message.find({
-      $or: [{ from_user: myId }, { to_user: myId }],
+      to_user: myId  // sirf received messages
     }).sort({ createdAt: -1 }).limit(20)
 
     const seen = new Set()
     const recent = []
     for (const msg of messages) {
-      const partnerId = msg.from_user.toString() === myId.toString()
-        ? msg.to_user.toString()
-        : msg.from_user.toString()
+      const partnerId = msg.from_user.toString()
       if (!seen.has(partnerId)) {
         seen.add(partnerId)
         recent.push({ partnerId, lastMessage: msg })
         if (recent.length === 5) break
       }
     }
+
     const partners = await User.find({ _id: { $in: [...seen] } })
       .select('_id full_name username profile_picture')
     const partnerMap = {}
     partners.forEach((p) => { partnerMap[p._id.toString()] = p })
 
+    // Count unread messages per partner
+    const unreadCounts = {}
+    for (const msg of messages) {
+      const partnerId = msg.from_user.toString()
+      if (!msg.seen) {
+        unreadCounts[partnerId] = (unreadCounts[partnerId] || 0) + 1
+      }
+    }
+
     const recentMessages = recent.map((r) => ({
       user: partnerMap[r.partnerId],
       lastMessage: r.lastMessage,
+      unreadCount: unreadCounts[r.partnerId] || 0,
     }))
     res.json({ success: true, recentMessages })
   } catch (err) {
@@ -91,10 +103,19 @@ export const getConversation = async (req, res) => {
       .limit(limit)
 
     // Mark as seen
-    await Message.updateMany(
-      { from_user: partnerId, to_user: myId, seen: false },
-      { $set: { seen: true } }
-    )
+    const unseenMessages = await Message.find({ from_user: partnerId, to_user: myId, seen: false })
+    if (unseenMessages.length > 0) {
+      await Message.updateMany(
+        { from_user: partnerId, to_user: myId, seen: false },
+        { $set: { seen: true } }
+      )
+      // Partner ko batao ke messages seen ho gaye
+      const { getSocketId, io } = await import('../server.js')
+      const partnerSocketId = getSocketId(partnerId)
+      if (partnerSocketId) {
+        io.to(partnerSocketId).emit('messages:seen', { from_user_id: myId })
+      }
+    }
 
     res.json({ success: true, messages: messages.reverse(), partner })
   } catch (err) {
@@ -128,6 +149,8 @@ export const sendMessage = async (req, res) => {
     })
 
     // Real-time delivery via Socket.IO
+    const notifType = req.body.is_story_reply === 'true' ? 'story_reply' : 'message'
+    createNotification({ recipient: to_user_id, sender: req.user._id, type: notifType })
     const recipientSocketId = getSocketId(to_user_id)
     if (recipientSocketId) {
       io.to(recipientSocketId).emit('message:new', message)

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router'
-import { ImageIcon, SendHorizonal, Trash2, MoreVertical } from 'lucide-react'
+import { ImageIcon, SendHorizonal, Trash2, MoreVertical, Check, CheckCheck } from 'lucide-react'
 import { useAppContext } from '../context/AppContext'
 import { api } from '../lib/api'
 import Loading from '../components/Loading'
@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 
 const ChatBox = () => {
   const { userid } = useParams()
-  const { dbUser, socket } = useAppContext()
+  const { dbUser, socket, isOnline } = useAppContext()
   const [activeMenu, setActiveMenu] = useState(null)
   const [partner, setPartner] = useState(null)
   const [messages, setMessages] = useState([])
@@ -38,7 +38,19 @@ const ChatBox = () => {
       }
     }
     socket.on('message:new', handler)
-    return () => socket.off('message:new', handler)
+
+    // Partner ne messages dekhe — sab seen ho gaye
+    const seenHandler = ({ from_user_id }) => {
+      if (from_user_id === dbUser?._id) {
+        setMessages(prev => prev.map(m => ({ ...m, seen: true })))
+      }
+    }
+    socket.on('messages:seen', seenHandler)
+
+    return () => {
+      socket.off('message:new', handler)
+      socket.off('messages:seen', seenHandler)
+    }
   }, [socket, userid, dbUser])
 
   useEffect(() => {
@@ -138,7 +150,31 @@ const ChatBox = () => {
                     {message.message_type === 'image' && (
                       <img src={message.media_url} alt='' className='w-full rounded-lg mb-1' />
                     )}
-                    {message.text && <p>{message.text}</p>}
+                    {message.text && (
+                      <div className='flex items-end gap-2'>
+                        <p>{message.text}</p>
+                        {isMine && (
+                          <span className='flex-shrink-0'>
+                            {message.seen
+                              ? <CheckCheck className='w-3.5 h-3.5 text-blue-500' />
+                              : isOnline(userid)
+                                ? <CheckCheck className='w-3.5 h-3.5 text-gray-400' />
+                                : <Check className='w-3.5 h-3.5 text-gray-400' />
+                            }
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {message.message_type === 'image' && isMine && (
+                      <div className='flex justify-end mt-0.5'>
+                        {message.seen
+                          ? <CheckCheck className='w-3.5 h-3.5 text-blue-500' />
+                          : isOnline(userid)
+                            ? <CheckCheck className='w-3.5 h-3.5 text-gray-400' />
+                            : <Check className='w-3.5 h-3.5 text-gray-400' />
+                        }
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

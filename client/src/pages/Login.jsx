@@ -18,6 +18,7 @@ const Login = () => {
     setLoading(true)
     try {
       const res = await api.login(form)
+      localStorage.removeItem('pingup_token')  // purana token clear karo
       login(res.user, res.token)
       toast.success(`Welcome back, ${res.user.full_name}!`)
       navigate('/')

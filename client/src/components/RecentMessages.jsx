@@ -9,7 +9,7 @@ const RecentMessages = () => {
     useEffect(() => {
         api.getRecentMessages()
             .then((data) => setMessages(data.recentMessages || []))
-            .catch(() => {})
+            .catch(() => { })
     }, [])
 
     const getProfilePic = (user) =>
@@ -38,8 +38,10 @@ const RecentMessages = () => {
                                 <p className='text-gray-500 truncate'>
                                     {item.lastMessage?.text || 'Media'}
                                 </p>
-                                {!item.lastMessage?.seen && (
-                                    <span className='bg-indigo-500 text-white w-4 h-4 flex items-center justify-center rounded-full text-[10px] ml-1 flex-shrink-0'>1</span>
+                                {item.unreadCount > 0 && (
+                                    <span className='bg-indigo-500 text-white w-4 h-4 flex items-center justify-center rounded-full text-[10px] ml-1 flex-shrink-0'>
+                                        {item.unreadCount > 9 ? '9+' : item.unreadCount}
+                                    </span>
                                 )}
                             </div>
                         </div>

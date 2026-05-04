@@ -41,7 +41,14 @@ export const createStory = async (req, res) => {
 // POST /api/stories/view/:storyId
 export const viewStory = async (req, res) => {
   try {
-    await Story.findByIdAndUpdate(req.params.storyId, { $addToSet: { views: req.user._id } })
+    const story = await Story.findById(req.params.storyId)
+    if (!story) return res.status(404).json({ success: false, message: 'Story not found' })
+
+    // Owner ka view count nahi hoga
+    if (story.user.toString() !== req.user._id.toString()) {
+      await Story.findByIdAndUpdate(req.params.storyId, { $addToSet: { views: req.user._id } })
+    }
+
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
@@ -56,6 +63,49 @@ export const deleteStory = async (req, res) => {
     if (story.media_public_id) await deleteFromCloudinary(story.media_public_id)
     await story.deleteOne()
     res.json({ success: true, message: 'Story deleted' })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+// POST /api/stories/like/:storyId
+export const likeStory = async (req, res) => {
+  try {
+    const story = await Story.findById(req.params.storyId)
+    if (!story) return res.status(404).json({ success: false, message: 'Story not found' })
+
+    // Owner apni story like nahi kar sakta
+    if (story.user.toString() === req.user._id.toString()) {
+      return res.status(400).json({ success: false, message: 'You cannot like your own story' })
+    }
+
+    const alreadyLiked = story.likes.map(String).includes(req.user._id.toString())
+    if (alreadyLiked) {
+      story.likes = story.likes.filter(id => id.toString() !== req.user._id.toString())
+    } else {
+      story.likes.push(req.user._id)
+    }
+    await story.save()
+    res.json({ success: true, likes: story.likes })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+// GET /api/stories/viewers/:storyId
+export const getStoryViewers = async (req, res) => {
+  try {
+    const story = await Story.findById(req.params.storyId)
+      .populate('views', '_id full_name username profile_picture')
+      .populate('likes', '_id full_name username profile_picture')
+    if (!story) return res.status(404).json({ success: false, message: 'Story not found' })
+
+    // Only story owner can see viewers
+    if (story.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized' })
+    }
+
+    res.json({ success: true, views: story.views, likes: story.likes })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }

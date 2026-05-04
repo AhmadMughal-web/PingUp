@@ -66,4 +66,10 @@ export const api = {
   getMyConnections: () => request('GET', '/connections/connections'),
   getPendingConnections: () => request('GET', '/connections/pending'),
   getSuggestions: () => request('GET', '/connections/suggestions'),
+
+  // Notifications
+  getNotifications: () => request('GET', '/notifications'),
+  getUnreadNotificationsCount: () => request('GET', '/notifications/unread-count'),
+  markAllNotificationsRead: () => request('PUT', '/notifications/mark-all-read'),
+  markNotificationRead: (id) => request('PUT', `/notifications/${id}/read`),
 }

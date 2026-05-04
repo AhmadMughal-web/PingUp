@@ -38,13 +38,14 @@ export const AppProvider = ({ children }) => {
   }, [dbUser])
 
   const login = (userData, jwtToken) => {
+    localStorage.clear()  // sab kuch clear karo
     localStorage.setItem('pingup_token', jwtToken)
     setToken(jwtToken)
     setDbUser(userData)
   }
 
   const logout = () => {
-    localStorage.removeItem('pingup_token')
+    localStorage.clear()  // sirf removeItem ki jagah clear
     setToken(null)
     setDbUser(null)
     socket?.disconnect()
@@ -55,7 +56,7 @@ export const AppProvider = ({ children }) => {
     try {
       const res = await api.getMyProfile()
       setDbUser(res.user)
-    } catch {}
+    } catch { }
   }
 
   const isOnline = (userId) => onlineUsers.includes(userId)

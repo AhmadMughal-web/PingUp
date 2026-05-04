@@ -6,7 +6,7 @@ import { useAppContext } from '../context/AppContext'
 import { api } from '../lib/api'
 import toast from 'react-hot-toast'
 
-const PostCard = ({ post, onLikeUpdate, onDelete }) => {
+const PostCard = ({ post, onLikeUpdate, onDelete, autoOpenComments = false }) => {
     const { dbUser } = useAppContext()
     const navigate = useNavigate()
 
@@ -14,7 +14,7 @@ const PostCard = ({ post, onLikeUpdate, onDelete }) => {
     const [liking, setLiking] = useState(false)
 
     // Comments state
-    const [showComments, setShowComments] = useState(false)
+    const [showComments, setShowComments] = useState(autoOpenComments)
     const [comments, setComments] = useState([])
     const [commentsLoaded, setCommentsLoaded] = useState(false)
     const [commentText, setCommentText] = useState('')
@@ -41,6 +41,16 @@ const PostCard = ({ post, onLikeUpdate, onDelete }) => {
         return () => document.removeEventListener('mousedown', handler)
     }, [])
 
+    // autoOpenComments pe scroll karo — useEffect add karo
+    // Existing useEffects ke baad add karo:
+    useEffect(() => {
+        if (autoOpenComments) {
+            setTimeout(() => {
+                document.getElementById(`post-${post._id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }, 500)
+        }
+    }, [autoOpenComments])
+
     // Load comments when section opens
     useEffect(() => {
         if (!showComments) return
@@ -51,12 +61,21 @@ const PostCard = ({ post, onLikeUpdate, onDelete }) => {
                 const parents = all.filter(c => !c.reply_to)
                 const replies = all.filter(c => !!c.reply_to)
                 const ordered = []
+
+                const addReplies = (parentId, depth = 1) => {
+                    replies
+                        .filter(r => r.reply_to?._id?.toString() === parentId || r.reply_to?.toString() === parentId)
+                        .forEach(r => {
+                            ordered.push({ ...r, isReply: true, depth })
+                            addReplies(r._id?.toString(), depth + 1)
+                        })
+                }
+
                 parents.forEach(p => {
                     ordered.push(p)
-                    replies
-                        .filter(r => r.reply_to?._id?.toString() === p._id?.toString() || r.reply_to?.toString() === p._id?.toString())
-                        .forEach(r => ordered.push({ ...r, isReply: true }))
+                    addReplies(p._id?.toString())
                 })
+
                 setComments(ordered)
                 setCommentsLoaded(true)
 
@@ -195,7 +214,7 @@ const PostCard = ({ post, onLikeUpdate, onDelete }) => {
     }
 
     return (
-        <div className='bg-white rounded-xl shadow p-4 space-y-3 w-full max-w-2xl'>
+        <div id={`post-${post._id}`} className='bg-white rounded-xl shadow p-4 space-y-3 w-full max-w-2xl'>
 
             {/* ── Header ── */}
             <div className='flex items-center justify-between'>
@@ -294,40 +313,7 @@ const PostCard = ({ post, onLikeUpdate, onDelete }) => {
             {showComments && (
                 <div className='border-t border-gray-100 pt-3 space-y-3'>
 
-                    {/* Input */}
-                    <div className='flex items-center gap-2'>
-                        {dbUser?.profile_picture?.url
-                            ? <img src={dbUser.profile_picture.url} alt='' className='w-8 h-8 rounded-full object-cover flex-shrink-0' />
-                            : <div className='w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0'>
-                                {dbUser?.full_name?.[0]?.toUpperCase()}
-                            </div>
-                        }
-                        <div className='flex-1 flex flex-col gap-1'>
-                            {replyTo && (
-                                <div className='flex items-center gap-1 text-xs text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full w-fit'>
-                                    <Reply className='w-3 h-3' />
-                                    Replying to @{replyTo.username}
-                                    <button onClick={() => setReplyTo(null)} className='ml-1 hover:text-red-400 cursor-pointer'>
-                                        <X className='w-3 h-3' />
-                                    </button>
-                                </div>
-                            )}
-                            <div className='flex items-center gap-2 bg-gray-50 rounded-full px-4 py-2 border border-gray-200'>
-                                <input
-                                    type='text'
-                                    value={commentText}
-                                    onChange={(e) => setCommentText(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && !sending && handleSendComment()}
-                                    placeholder={replyTo ? `Reply to @${replyTo.username}…` : 'Write a comment…'}
-                                    className='flex-1 bg-transparent text-sm outline-none'
-                                />
-                                <button onClick={handleSendComment} disabled={!commentText.trim() || sending}
-                                    className='text-indigo-500 hover:text-indigo-700 disabled:opacity-30 transition cursor-pointer'>
-                                    <Send className='w-4 h-4' />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+
 
                     {/* Comments List */}
                     {!commentsLoaded ? (
@@ -340,7 +326,8 @@ const PostCard = ({ post, onLikeUpdate, onDelete }) => {
                                 const commentPic = comment.user?.profile_picture?.url || comment.user?.profile_picture || ''
                                 const isMyComment = dbUser?._id?.toString() === comment.user?._id?.toString()
                                 return (
-                                    <div key={comment._id} className={`flex items-start gap-2 ${comment.isReply ? 'ml-8 mt-1' : ''}`}>
+                                    <div key={comment._id}
+                                        className={`flex items-start gap-2 ${comment.isReply ? `ml-${Math.min((comment.depth || 1) * 6, 16)} mt-1` : ''}`}>
                                         {commentPic
                                             ? <img src={commentPic} alt='' className='w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5' />
                                             : <div className='w-7 h-7 rounded-full bg-indigo-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5'>
@@ -383,6 +370,40 @@ const PostCard = ({ post, onLikeUpdate, onDelete }) => {
                             })}
                         </div>
                     )}
+                    {/* Input */}
+                    <div className='flex items-center gap-2'>
+                        {dbUser?.profile_picture?.url
+                            ? <img src={dbUser.profile_picture.url} alt='' className='w-8 h-8 rounded-full object-cover flex-shrink-0' />
+                            : <div className='w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0'>
+                                {dbUser?.full_name?.[0]?.toUpperCase()}
+                            </div>
+                        }
+                        <div className='flex-1 flex flex-col gap-1'>
+                            {replyTo && (
+                                <div className='flex items-center gap-1 text-xs text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full w-fit'>
+                                    <Reply className='w-3 h-3' />
+                                    Replying to @{replyTo.username}
+                                    <button onClick={() => setReplyTo(null)} className='ml-1 hover:text-red-400 cursor-pointer'>
+                                        <X className='w-3 h-3' />
+                                    </button>
+                                </div>
+                            )}
+                            <div className='flex items-center gap-2 bg-gray-50 rounded-full px-4 py-2 border border-gray-200'>
+                                <input
+                                    type='text'
+                                    value={commentText}
+                                    onChange={(e) => setCommentText(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && !sending && handleSendComment()}
+                                    placeholder={replyTo ? `Reply to @${replyTo.username}…` : 'Write a comment…'}
+                                    className='flex-1 bg-transparent text-sm outline-none'
+                                />
+                                <button onClick={handleSendComment} disabled={!commentText.trim() || sending}
+                                    className='text-indigo-500 hover:text-indigo-700 disabled:opacity-30 transition cursor-pointer'>
+                                    <Send className='w-4 h-4' />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

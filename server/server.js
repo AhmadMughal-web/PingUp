@@ -15,6 +15,7 @@ import storyRoutes from './routes/story.routes.js'
 import messageRoutes from './routes/message.routes.js'
 import connectionRoutes from './routes/connection.routes.js'
 import commentRoutes from './routes/comment.routes.js'
+import notificationRoutes from './routes/notification.routes.js'
 
 const app = express()
 const httpServer = createServer(app)
@@ -60,6 +61,8 @@ app.use('/api/stories', storyRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/api/connections', connectionRoutes)
 app.use('/api/comments', commentRoutes)
+app.use('/api/notifications', notificationRoutes)
+
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }))
 

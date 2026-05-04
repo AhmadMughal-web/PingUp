@@ -9,6 +9,7 @@ const storySchema = new mongoose.Schema(
     media_type: { type: String, enum: ['text', 'image', 'video'], default: 'text' },
     background_color: { type: String, default: '#4f46e5' },
     views: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     expires_at: { type: Date, default: () => new Date(Date.now() + 24 * 60 * 60 * 1000) },
   },
   { timestamps: true }

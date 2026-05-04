@@ -16,6 +16,7 @@ import Connections from './pages/Connections'
 import Discover from './pages/Discover'
 import Profile from './pages/Profile'
 import CreatePost from './pages/CreatePost'
+import Notifications from './pages/Notifications'
 
 // Protect routes — redirect to /login if not authenticated
 const PrivateRoute = ({ children }) => {
@@ -52,6 +53,7 @@ const App = () => {
           <Route path='profile' element={<Profile />} />
           <Route path='profile/:profileId' element={<Profile />} />
           <Route path='create-post' element={<CreatePost />} />
+          <Route path='notifications' element={<Notifications />} />
         </Route>
 
         {/* Fallback */}

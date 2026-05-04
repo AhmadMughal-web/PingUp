@@ -1,5 +1,6 @@
 import Comment from '../models/Comment.model.js'
 import Post from '../models/Post.model.js'
+import { createNotification } from './notification.controller.js'
 
 const populateUser = '_id full_name username profile_picture is_verified'
 
@@ -35,6 +36,15 @@ export const addComment = async (req, res) => {
     })
     await comment.populate('user', populateUser)
     await Post.findByIdAndUpdate(req.params.postId, { $inc: { comments_count: 1 } })
+
+    createNotification({ recipient: post.user, sender: req.user._id, type: 'comment', post: post._id, comment: comment._id })
+
+    if (reply_to) {
+      const parentComment = await Comment.findById(reply_to)
+      if (parentComment) {
+        createNotification({ recipient: parentComment.user, sender: req.user._id, type: 'reply', post: post._id, comment: comment._id })
+      }
+    }
 
     res.status(201).json({ success: true, comment })
   } catch (err) {

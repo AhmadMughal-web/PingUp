@@ -16,13 +16,7 @@ const UserCard = ({ user }) => {
 
     const [isFollowing, setIsFollowing] = useState(iFollowThem)
     const [followsMe, setFollowsMe] = useState(theyFollowMe)
-    const [isConnected, setIsConnected] = useState(
-        () => {
-            const myFollowing = dbUser?.following?.map(String) || []
-            const myFollowers = dbUser?.followers?.map(String) || []
-            return myFollowing.includes(user._id?.toString()) && myFollowers.includes(user._id?.toString())
-        }
-    )
+    const [isConnected, setIsConnected] = useState(iFollowThem && theyFollowMe)
     const [followerCount, setFollowerCount] = useState(
         user.followers?.length ?? 0
     )

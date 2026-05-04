@@ -1,5 +1,6 @@
 import Post from '../models/Post.model.js'
 import { deleteFromCloudinary } from '../config/cloudinary.js'
+import { createNotification } from './notification.controller.js'
 
 // GET /api/posts/feed?page=
 export const getFeed = async (req, res) => {
@@ -66,6 +67,7 @@ export const toggleLike = async (req, res) => {
       post.likes_count.pull(req.user._id)
     } else {
       post.likes_count.push(req.user._id)
+      createNotification({ recipient: post.user, sender: req.user._id, type: 'like_post', post: post._id })
     }
     await post.save()
     res.json({ success: true, likes_count: post.likes_count })

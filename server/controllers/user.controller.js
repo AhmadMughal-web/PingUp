@@ -1,5 +1,6 @@
 import User from '../models/User.model.js'
 import { deleteFromCloudinary, createUploader } from '../config/cloudinary.js'
+import { createNotification } from './notification.controller.js'
 
 // GET /api/users/me
 export const getMe = async (req, res) => {
@@ -92,6 +93,7 @@ export const toggleFollow = async (req, res) => {
     } else {
       await User.findByIdAndUpdate(myId, { $addToSet: { following: targetId } })
       await User.findByIdAndUpdate(targetId, { $addToSet: { followers: myId } })
+      createNotification({ recipient: targetId, sender: myId, type: 'follow' })
       res.json({ success: true, action: 'followed' })
     }
   } catch (err) {

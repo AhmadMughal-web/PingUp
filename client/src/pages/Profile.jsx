@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useLocation } from 'react-router'
 import Loading from '../components/Loading'
 import UserProfileInfo from '../components/UserProfileInfo'
 import PostCard from '../components/PostCard'
@@ -12,6 +12,8 @@ import toast from 'react-hot-toast'
 const Profile = () => {
   const { profileId } = useParams()
   const { dbUser } = useAppContext()
+  const location = useLocation()
+  const { highlightPost, openComments } = location.state || {}
 
   const [user, setUser] = useState(null)
   const [posts, setPosts] = useState([])
@@ -79,9 +81,8 @@ const Profile = () => {
               <button
                 onClick={() => setActiveTab(tab)}
                 key={tab}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                  activeTab === tab ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${activeTab === tab ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
@@ -95,7 +96,11 @@ const Profile = () => {
                 <p className='text-gray-400 py-10'>No posts yet</p>
               )}
               {posts.map((post) => (
-                <PostCard key={post._id} post={post} />
+                <PostCard
+                  key={post._id}
+                  post={post}
+                  autoOpenComments={openComments && post._id === highlightPost}
+                />
               ))}
             </div>
           )}

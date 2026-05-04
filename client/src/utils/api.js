@@ -1,5 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
-
+console.log('API FILE LOADED - getStoryViewers:', typeof (() => { }))
 const request = async (method, path, data = null, isFormData = false) => {
   const token = localStorage.getItem('pingup_token')
   const headers = {}
@@ -53,6 +53,8 @@ export const api = {
   createStory: (fd) => request('POST', '/stories/create', fd, true),
   viewStory: (storyId) => request('POST', `/stories/view/${storyId}`),
   deleteStory: (storyId) => request('DELETE', `/stories/${storyId}`),
+  likeStory: (storyId) => request('POST', `/stories/like/${storyId}`),
+  getStoryViewers: (storyId) => { console.log('getStoryViewers called!'); return request('GET', `/stories/viewers/${storyId}`) },
 
   // Messages
   getInbox: () => request('GET', '/messages'),
