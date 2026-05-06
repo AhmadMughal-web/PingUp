@@ -6,7 +6,7 @@ import { api } from '../lib/api'
 import toast from 'react-hot-toast'
 
 const UserCard = ({ user }) => {
-    const { dbUser } = useAppContext()
+    const { dbUser, followUser, unfollowUser } = useAppContext()
     const navigate = useNavigate()
 
     // Initialise from the data already in the user object so the card is
@@ -36,6 +36,12 @@ const UserCard = ({ user }) => {
         setFollowerCount((c) => (wasFollowing ? c - 1 : c + 1))
         try {
             await api.toggleFollow(user._id)
+            // Local update — instant, no server call
+            if (wasFollowing) {
+                unfollowUser(user._id)
+            } else {
+                followUser(user._id)
+            }
         } catch {
             // Revert on failure
             setIsFollowing(wasFollowing)

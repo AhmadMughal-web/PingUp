@@ -56,13 +56,29 @@ export const AppProvider = ({ children }) => {
     try {
       const res = await api.getMyProfile()
       setDbUser(res.user)
-    } catch { }
+    } catch (err) {
+      console.error('refreshUser failed:', err.message)
+    }
+  }
+
+  const followUser = (targetId) => {
+    setDbUser(prev => ({
+      ...prev,
+      following: [...(prev.following || []), targetId]
+    }))
+  }
+
+  const unfollowUser = (targetId) => {
+    setDbUser(prev => ({
+      ...prev,
+      following: (prev.following || []).filter(id => id.toString() !== targetId.toString())
+    }))
   }
 
   const isOnline = (userId) => onlineUsers.includes(userId)
 
   return (
-    <AppContext.Provider value={{ dbUser, token, loading, socket, onlineUsers, isOnline, login, logout, refreshUser }}>
+    <AppContext.Provider value={{ dbUser, token, loading, socket, onlineUsers, isOnline, login, logout, refreshUser, followUser, unfollowUser }}>
       {children}
     </AppContext.Provider>
   )

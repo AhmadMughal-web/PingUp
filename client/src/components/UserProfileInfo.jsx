@@ -6,7 +6,7 @@ import { api } from '../lib/api'
 import toast from 'react-hot-toast'
 
 const UserProfileInfo = ({ user, posts, profileId, setShowEdit }) => {
-    const { dbUser } = useAppContext()
+    const { dbUser, followUser, unfollowUser } = useAppContext()
 
     // Is the viewer already following this profile?
     const [isFollowing, setIsFollowing] = useState(
@@ -31,6 +31,11 @@ const UserProfileInfo = ({ user, posts, profileId, setShowEdit }) => {
         setFollowerCount((c) => (wasFollowing ? c - 1 : c + 1))
         try {
             await api.toggleFollow(user._id)
+            if (wasFollowing) {
+                unfollowUser(user._id)
+            } else {
+                followUser(user._id)
+            }
         } catch {
             setIsFollowing(wasFollowing)
             setFollowerCount((c) => (wasFollowing ? c + 1 : c - 1))
@@ -80,11 +85,10 @@ const UserProfileInfo = ({ user, posts, profileId, setShowEdit }) => {
                             <button
                                 onClick={handleFollow}
                                 disabled={busy}
-                                className={`px-5 py-2 rounded-lg text-sm font-medium transition active:scale-95 mt-4 md:mt-0 cursor-pointer disabled:opacity-60 ${
-                                    isFollowing
+                                className={`px-5 py-2 rounded-lg text-sm font-medium transition active:scale-95 mt-4 md:mt-0 cursor-pointer disabled:opacity-60 ${isFollowing
                                         ? 'border border-gray-300 hover:bg-gray-50 text-gray-700'
                                         : 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white'
-                                }`}
+                                    }`}
                             >
                                 {isFollowing ? 'Following' : 'Follow'}
                             </button>
