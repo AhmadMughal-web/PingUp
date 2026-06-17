@@ -12,7 +12,6 @@
 ## 🚀 Live Demo
 
 > **URL:** https://pingup-social-media-platform.netlify.app 
-> **Demo Account:** `demo@pingup.com` / `demo1234`
 
 ---
 
