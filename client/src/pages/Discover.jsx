@@ -30,7 +30,7 @@ const Discover = () => {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-b from-slate-50 to-white'>
+    <div className='h-full overflow-y-scroll no-scrollbar bg-gradient-to-b from-slate-50 to-white'>
       <div className='max-w-6xl mx-auto p-6'>
 
         <div className='mb-8'>
