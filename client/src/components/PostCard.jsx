@@ -24,8 +24,10 @@ const PostCard = ({ post, onLikeUpdate, onDelete, autoOpenComments = false }) =>
 
     // 3-dot menu state
     const [showMenu, setShowMenu] = useState(false)
+    const [expanded, setExpanded] = useState(false)
     const [isPrivate, setIsPrivate] = useState(post.is_private || false)
     const menuRef = useRef(null)
+
 
     const isOwnPost = dbUser?._id === post.user?._id?.toString() ||
         dbUser?._id?.toString() === post.user?._id?.toString()
@@ -270,9 +272,18 @@ const PostCard = ({ post, onLikeUpdate, onDelete, autoOpenComments = false }) =>
 
             {/* ── Content ── */}
             {post.content && (
-                <p className='text-gray-800 text-sm whitespace-pre-line leading-relaxed'>
-                    {renderContent(post.content)}
-                </p>
+                <div className='text-gray-800 text-sm leading-relaxed'>
+                    <p className={`whitespace-pre-line ${!expanded ? 'line-clamp-3' : ''}`}>
+                        {renderContent(post.content)}
+                    </p>
+                    {post.content.length > 150 && (
+                        <button
+                            onClick={() => setExpanded(!expanded)}
+                            className='text-indigo-500 hover:text-indigo-700 text-sm font-medium mt-1 cursor-pointer'>
+                            {expanded ? 'See less' : 'See more'}
+                        </button>
+                    )}
+                </div>
             )}
 
             {/* ── Images ── */}
