@@ -218,7 +218,7 @@ cd client && npm run dev
 
 **Muhammad Ahmad**  
 Full Stack Developer | AI Engineer  
-📍 Lahore, Pakistan
+📍 Lahore, Pakistan.
 
 > *Built this entire platform solo — frontend, backend, real-time infrastructure, media storage, and authentication — all from scratch.*
 
